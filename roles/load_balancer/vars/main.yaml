@@ -1,0 +1,8 @@
+haproxy_app_name: webapp
+haproxy_mode: http
+haproxy_enable_stats: enable 
+haproxy_algorithm: roundrobin
+httpd_port: 80
+haproxy_backend_servers:
+iface: eth2
+paramstring: cookie A check

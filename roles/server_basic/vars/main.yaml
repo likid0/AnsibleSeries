@@ -1,0 +1,3 @@
+---
+ntp1server: hora.rediris.es
+ntp2server: 0.centos.pool.ntp.org

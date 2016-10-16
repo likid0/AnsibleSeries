@@ -1,0 +1,6 @@
+---
+http_port: 80
+http_user: apache
+doc_dir: /ansible
+doc_root: /var/www/html/ansible
+repository: https://github.com/likid0/lamptest.git 

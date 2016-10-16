@@ -1,0 +1,40 @@
+---
+- hosts: dc-madrid
+  become: yes
+  gather_facts: yes
+  roles:
+  - server_basic
+  tags:
+  - basic
+
+- hosts: local
+  become: yes
+  gather_facts: no
+  roles:
+  - git-app
+  tags:
+  - update-app
+
+- hosts: web
+  become: yes
+  gather_facts: yes
+  roles:
+  - webserver 
+  tags:
+  - web
+
+- hosts: db 
+  become: yes
+  gather_facts: yes
+  roles:
+  - dbserver 
+  tags:
+  - db
+
+- hosts: lb
+  become: yes
+  gather_facts: yes
+  roles:
+  - load_balancer
+  tags:
+  - lb

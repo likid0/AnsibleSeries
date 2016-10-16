@@ -1,0 +1,15 @@
+[client]
+user=root
+password={{ root_db_pass }}
+
+[mysql]
+user=root
+password={{ root_db_pass }}
+
+[mysqldump]
+user=root
+password={{ root_db_pass }}
+
+[mysqldiff]
+user=root
+password={{ root_db_pass }}

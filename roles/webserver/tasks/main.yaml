@@ -1,0 +1,32 @@
+---
+
+- include_vars: "db.yaml"
+- name: Ensure HTTPD is installed
+  yum:  name={{ item }} state=latest
+  with_items: 
+     - httpd
+     - php
+     - php-mysql
+     - git
+
+- name: Start HTTPD and enable on boot
+  service: name=httpd enabled=yes state=started
+
+- name: Deploy config httpd
+  template: src=httpd.j2 dest=/etc/httpd/conf/httpd.conf
+  notify:
+    - Restart Apache
+
+- name: Check if doc_root exists
+  stat: path={{doc_root}}
+  register: check_path
+
+- name: Create doc_root if it doesn't exist
+  file: path={{doc_root}} state=directory
+  when: check_path.stat.exists == false
+
+- name: Insert custom index.html in host
+  template: src=index.php.j2 dest={{doc_root}}/index.php
+
+- name: Open webserver ports in iptables
+  iptables: action=insert chain=INPUT source=0.0.0.0/0 ctstate=NEW state=present protocol=tcp match=tcp destination_port=80 jump=ACCEPT

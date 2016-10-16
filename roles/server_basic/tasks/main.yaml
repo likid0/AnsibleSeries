@@ -1,0 +1,7 @@
+---
+- include_vars: "{{ ansible_os_family }}.yaml"
+- include: update-soft.yaml
+- include: iptables.yaml
+- include: ntp.yaml
+- include: selinux.yaml
+- include: hosts.yaml

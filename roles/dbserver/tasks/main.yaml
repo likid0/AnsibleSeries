@@ -1,0 +1,90 @@
+---
+- name: Install Mysql package
+  yum: name={{ item }} state=present
+  with_items:
+   - mariadb-server
+   - MySQL-python
+
+- name: Check if needed dirs for mariadb exist
+  stat: path={{ mysql_log }}
+  register: check_path
+
+- name: Create logs dir for mariadb if it doesn't exist
+  file: path={{ mysql_log }} state=directory owner=mysql
+  when: check_path.stat.exists == false
+
+- name: Check if needed dirs for mariadb exist
+  stat: path={{ mysql_run }}
+  register: check_path
+
+- name: Create run dir for mariadb if it doesn't exist
+  file: path={{ mysql_run }} state=directory owner=mysql
+  when: check_path.stat.exists == false
+
+- name: Check if needed dirs for mariadb exist
+  stat: path={{ mysql_var }}
+  register: check_path
+
+- name: Create run var/lib for mariadb if it doesn't exist
+  file: path={{ mysql_var }} state=directory owner=mysql
+  when: check_path.stat.exists == false
+
+- name: Configure Mysql template
+  template: src=my.cnf.j2 dest=/etc/my.cnf
+  notify: MySQL Restart
+
+- name: Start Mysql and enable on boot
+  service: name=mariadb enabled=yes state=started
+
+- name: ensure anonymous users are not in the database
+  mysql_user: name='' host={{ item }} state=absent
+  with_items:
+     - localhost
+     - '{{ inventory_hostname }}'
+
+- name: remove the test database
+  mysql_db: name=test state=absent
+
+- name: update mysql root password for all root accounts
+  mysql_user: name=root host={{ item }} password={{ root_db_pass }}
+  with_items:
+    - '{{ ansible_hostname }}'
+    - 127.0.0.1
+    - ::1
+    - localhost
+
+- name: copy .my.cnf file with root password credentials
+  template: src=root.my.cnf dest=/root/.my.cnf owner=root mode=0600
+
+- name: open iptables 3306 port for mysql
+  iptables: action=insert chain=INPUT source=0.0.0.0/0 ctstate=NEW state=present protocol=tcp match=tcp destination_port=3306 jump=ACCEPT
+
+- name: Test that port 3306 is open, and the continue
+  wait_for: port=3306 timeout=10
+
+- name: Drop test Database just in case it existed before
+  mysql_db: name={{ db_test }} state=absent
+
+- name: Create test Database
+  mysql_db: name={{ db_test }} state=present
+
+- name: copy mysql test dump to userdb database
+  copy: src=dump/dump.sql dest=/tmp
+
+- name: import test dump to userdb test database
+  mysql_db: name={{ db_test }} state=import target=/tmp/dump.sql
+
+- name: Create Application DB User 
+  mysql_user: name={{ dbuser }} password={{ dbupass }} priv={{ db_test }}.*:ALL host='%' state=present
+
+- name: Query the test DB to check the import worked ok
+  command: mysql -u {{ dbuser }} -p{{ dbupass }} -e "SELECT * FROM test" {{ db_test }}
+
+- name: delete the test database
+  mysql_db: name={{ db_test }} state=absent
+
+- name: Create Application Database
+  mysql_db: name={{ db }} state=present
+
+- name: Add access to dbuser to lamp database
+  mysql_user: name={{ dbuser }} password={{ dbupass }} priv={{ db }}.*:ALL host='%' state=present

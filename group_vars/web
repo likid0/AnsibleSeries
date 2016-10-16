@@ -1,0 +1,6 @@
+---
+
+#Username variable.
+username: web
+password: web
+shell: /bin/bash

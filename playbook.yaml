@@ -1,0 +1,62 @@
+---
+- hosts: web
+  become: yes
+  gather_facts: True
+  vars:
+     http_port: 80
+     http_user: apache
+     doc_dir: /ansible
+     doc_root: /var/www/html/ansible
+  tasks:
+  - name: Update the OS to latest pkgs
+    yum: name=* state=latest
+  - name: Ensure HTTPD is installed
+    yum:  name=httpd state=latest
+  - name: Start HTTPD and enable on boot
+    service: name=httpd enabled=yes state=started
+  - name: Deploy config httpd
+    template: src=templates/httpd.j2 dest=/etc/httpd/conf/httpd.conf
+    notify:
+        - Restart Apache
+  - name: Insert custom index.html in host
+    template: src=templates/index.j2 dest={{doc_root}}/index.html
+  - name: Check if doc_root exists
+    stat: path={{doc_root}}
+    register: check_path
+  - name: Create doc_root if it doesn't exist
+    file: path={{doc_root}} state=directory
+    when: check_path.stat.exists == false
+  handlers:
+        - name: Restart Apache
+          service: name=httpd state=restarted
+
+- hosts: db
+  become: yes
+  gather_facts: False
+  tasks:
+  - name: Update the OS to latest pkgs
+    yum: name=* state=latest
+  - name: Ensure Mysql is installed
+    yum: name=mariadb-server state=latest
+  - name: Start Mysql and enable on boot
+    service: name=mariadb enabled=yes state=started
+
+- hosts: dc-madrid
+  become: yes
+  tasks:
+  - name: Ensure Iptables is installed
+    apt: name=iptables state=latest
+    when: ansible_os_family == "Debian"
+  - name: Disable firewall ufw
+    ufw: state=disabled policy=allow
+    when: ansible_distribution == "Ubuntu"
+
+  - name: Ensure Iptables is installed
+    yum: name=iptables state=latest
+    when: ansible_os_family == "RedHat"
+  - name: Ensure iptables-services is installed
+    yum: name=iptables-services state=latest
+    when: ansible_os_family == "RedHat"
+  - name: disable firewalld
+    service: name=firewalld enabled=no state=stopped
+    when: ansible_distribution == "CentOS"

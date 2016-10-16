@@ -1,0 +1,11 @@
+---
+mysql_port: '3306'
+root_db_pass: 'rootpass'
+db: 'lampdb'
+db_test: 'testdb'
+dbuser: 'lampuser'
+dbupass: 'userpass'
+dbhost: 'db1'
+mysql_log: '/var/log/mysql'
+mysql_run: '/var/run/mysqld'
+mysql_var: '/var/lib/mysql'

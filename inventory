@@ -1,0 +1,24 @@
+[web]
+web1 ansible_ssh_host=10.0.1.5  
+web2 ansible_ssh_host=10.0.2.5  
+web3 ansible_ssh_host=10.0.5.5  
+[lb]
+lb1 ansible_ssh_host=10.0.3.5  
+[db]
+db1 ansible_ssh_host=10.0.4.5  
+[local]
+localhost ansible_connection=local ansible_user=liquid
+
+
+[dc1-madrid:children]
+web
+lb
+[dc2-madrid:children]
+db
+
+[dc-madrid:children]
+dc1-madrid
+dc2-madrid
+[dc-madrid:vars]
+ansible_ssh_user=vagrant
+
